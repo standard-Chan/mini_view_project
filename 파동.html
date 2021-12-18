@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+    <style>
+        body {
+            width: auto;
+            height: 100%;
+            background-color: azure;
+        }
+        #canvas {
+            background-color: hsla(192, 95%, 45%, 0.822);
+        }
+    </style>
+<body>
+        <canvas id = "canvas" width = "1890px" height="965px"></canvas>
+    <script>
+        let canvas = document.getElementById("canvas");
+        let ctx = canvas.getContext("2d");
+
+        requestAnimationFrame(clear)
+        function clear () {
+            ctx.clearRect(0,0,canvas.width, canvas.height);
+            requestAnimationFrame(clear)
+        }
+
+        //파동 생성
+        function waveClick(x,y) {
+            let r = 5;
+            let trp = 1;
+            let wt = 5;
+            let wt2 = 15;
+            let position_x = x;
+            let position_y = y;
+
+            requestAnimationFrame(wave);
+            function wave () {
+
+                ctx.beginPath();
+                ctx.arc(position_x, position_y, r, 0, 2*Math.PI);
+                ctx.strokeStyle = `rgba(153, 203, 250, ${trp})`
+                ctx.lineWidth = `${wt}`
+                ctx.closePath();
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(position_x, position_y, r-5, 0, 2*Math.PI);
+                ctx.strokeStyle = `rgba(20, 90, 170, ${trp})`
+                ctx.stroke();
+                r += 4;
+                trp = 1 - r/500;
+                wt = r/50;
+                wt2 = r/10;
+                if (r < 500) {
+                    requestAnimationFrame(wave);
+                }
+            }
+        }
+        // 빗방울 낙하
+        function rain () {
+            let start_x = Math.random() * canvas.width;
+            let start_y = Math.random() * canvas.height;
+            let end_y = start_y + Math.random() * canvas.height;
+            let y = start_y;
+
+            drop();
+
+            function drop() {
+                ctx.strokeRect(start_x, y, 1, 50);
+                ctx.strokeStyle = "black"
+                ctx.stroke();
+                y += 20;
+                if (y <= end_y) {
+                    requestAnimationFrame(drop);
+                }
+                else if (y > end_y) {
+                    waveClick(start_x, y);
+                    
+                }
+
+            }
+            
+            
+        }
+
+        setInterval(rain,500);
+
+        canvas.addEventListener("mousedown", (event) => {
+            waveClick(event.clientX, event.clientY);
+            setTimeout(() => {waveClick(event.clientX, event.clientY)},150);
+            setTimeout(() => {waveClick(event.clientX, event.clientY)},300);
+        })
+
+        let movement = 0;
+        canvas.addEventListener("mousemove", (event) => {
+            let frist_x
+            let second_x
+            let first_y
+            let second_y
+            if (movement % 25 == 0) {
+                waveClick(event.clientX, event.clientY);
+            }
+            movement += 1;
+            
+        })
+        </script>
+</body>
+</html>
