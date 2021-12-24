@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>눈</title>
+    <style>
+        body {
+            margin: 0px;
+background-color: rgb(37, 11, 68);
+        }
+
+    </style>
+
+</head>
+<body>
+    <canvas id = "snow"></canvas>
+    <script>
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        let canvas = document.getElementById("snow");
+        let ctx = canvas.getContext("2d");
+
+        canvas.width = width;
+        canvas.height = height;    
+
+        //객체 및 배열
+        let starArray = []
+        let numberOfStar = 500;
+
+        let snowArray = []                      // 땅에 떨어진 눈 배열
+        let fallingObject = {}
+        fallingObject.fallingSlope = 0;
+        let moon = {}
+        moon.x = 150, moon.y = 100, moon.r = 30
+
+
+        //별 객체생성
+        function starObject () {
+            let star = {}
+            star.x = Math.random() * width;
+            star.y = Math.random() * height *19/30;
+            star.r = Math.random();
+            star.color = Math.random() * 40+20;
+            star.alpha = Math.random() * 0.7 + 0.3;
+            star.alpha_plus_minus = 0.07;
+            starArray.push(star);
+
+        }
+
+        for (let i = 0; i < numberOfStar; i++) {
+            starObject();
+        }
+
+        //밝기 (투명도)조절
+        function alphaAdjust (i) {
+            if (starArray[i].alpha >= 1 || starArray[i].alpha <= 0.4) {
+                starArray[i].alpha_plus_minus *= -1;
+            }
+            starArray[i].alpha += starArray[i].alpha_plus_minus;
+            return starArray[i].alpha;
+        }
+
+        //눈
+        function snowFall () {
+            let snowSize = Math.random() * 5;            
+            let y = 0;
+            let end_y = (snowSize/15 + 2/3)*height;            
+            let start_x = Math.random() * width*2 - 0.5*width;
+            let x = start_x;
+            let airResist = {}
+            airResist.resist = Math.random() * 0.3 - 0.15;
+            airResist.x_move = Math.random() * 3 + 2;
+
+            let speed = snowSize*snowSize/15 + 1;
+            let transperent = Math.random() * 0.4 + 0.5;
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(255,255,255, ${transperent})`
+            ctx.arc(x, y, snowSize, 0, 2*Math.PI);
+            ctx.fill();
+            ctx.closePath();
+
+            function falling () {                  //떨어지는 눈
+
+                ctx.beginPath();
+                ctx.fillStyle = `rgba(255,255,255, ${transperent})`
+                ctx.arc(x , y, snowSize, 0, 2*Math.PI);
+                ctx.fill();
+                ctx.strokeStyle = "rgb(255,255,255,0.3)"
+                ctx.lineWidth = `${snowSize+1}`
+                ctx.stroke();
+                ctx.closePath();
+                //x 공기 저항
+                if (x >= start_x + airResist.x_move || x <= start_x - airResist.x_move) {
+                    airResist.resist *= -1;
+                }
+                //y 낙하
+                if (y <= end_y) {
+                    y += speed;
+                    x += airResist.resist + fallingObject.fallingSlope;
+                    requestAnimationFrame(falling);
+                }
+                else {
+                    let snow = {}
+                    snow.x = x;
+                    snow.y = y;
+                    snow.r = snowSize;
+                    snow.transperent = transperent;
+                    snowArray.unshift(snow);
+                    if (snowArray.length >= 100) {
+                        snowArray.pop();
+                    }
+                }
+            }
+
+            falling();
+        }
+        
+        
+
+        function render() {
+            //배경
+            //하늘
+            let gradientSky = ctx.createLinearGradient(0, 0, 0, height*2/3);              
+            gradientSky.addColorStop(0, "rgb(4, 21, 58)");
+            gradientSky.addColorStop(1, "rgb(37, 11, 68)");
+            ctx.fillStyle = gradientSky;
+            ctx.fillRect(0, 0, width, height*2/3);
+            ctx.fill();
+
+            //땅
+            let gradientE = ctx.createLinearGradient(0, height*2/3, 0, height);           
+            gradientE.addColorStop(0, "rgb(47, 47, 99)");
+            gradientE.addColorStop(1, "rgb(183,188,210)");
+            ctx.fillStyle = gradientE;
+            ctx.fillRect(0, height*2/3, width, height/3);
+            ctx.fill();
+
+            //땅에 내린 눈
+            for (let i = 0; i < snowArray.length; i++) {                                
+                ctx.beginPath();
+                ctx.arc(snowArray[i].x, snowArray[i].y, snowArray[i].r, 0, 2*Math.PI);
+                ctx.fillStyle = `rgba(255,255,255,${snowArray[i].transperent*(1-i*0.01)})`
+                ctx.strokeStyle = `rgba(255,255,255,${0.3*(1-i*0.01)})`
+                ctx.lineWidth = `${snowArray[i].r + 1}`
+                ctx.fill();
+                ctx.stroke();
+            }
+
+            //별
+            for (let i = 0; i < starArray.length; i++) {
+                ctx.beginPath();
+                ctx.arc(starArray[i].x, starArray[i].y, starArray[i].r, 0, 2*Math.PI);
+                ctx.fillStyle = `hsla(${starArray[i].color}, 90%, 60%, ${alphaAdjust(i)})`
+                ctx.fill();
+                ctx.strokeStyle = `hsla(${starArray[i].color}, 90%, 60%, ${alphaAdjust(i) / 5})`
+                ctx.lineWidth = "3"
+                ctx.stroke();
+            }
+            //달
+            ctx.beginPath();
+            ctx.fillStyle = "rgb(240, 240, 72)";
+            ctx.arc(moon.x, moon.y, moon.r, 0, Math.PI * 2);
+            ctx.fill();
+            for (let i = 1; i <= 10; i++) {
+                ctx.strokeStyle = `rgba(240, 240, 72, ${0.8-0.08*i})`
+                ctx.lineWidth =`${15 + i*2.5}`
+                ctx.stroke();
+            }
+
+            requestAnimationFrame(render);
+        }
+
+        canvas.addEventListener("mousedown", (event) => {
+            fallingObject.fallingSlope = (event.clientX - width / 2) * 2 / width * 5;
+        })
+
+        setInterval(snowFall,50);
+        render();
+    </script>
+</body>
+</html>
